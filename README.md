@@ -45,7 +45,7 @@ Here, no gpu is in use, so in the following command you would use either -g 0 or
 
 ```
 cd FirstML
-python3 MLstarter.py -s SIGforPhoAll.dat -b QCDconstpt.dat -c 0,1,2,3,4,5 -d 1,2,3,4,5,6,7,8,9,10,11,12 -p test -f 0.2 -e 2 -g 1
+python3 MLstarter.py -s SIGforPhoAll.dat -b QCDconstpt.dat -c 0,1,2,3,4,5 -d 1,2,3,4,5,6,7,8,9,10,11,12 -p testing -f 0.2 -e 2 -g 1
 ```
 Note that for a real training use -f 1.0 and -e 1000
 

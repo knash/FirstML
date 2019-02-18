@@ -443,7 +443,7 @@ if options.load!="None":
 
 if mode=='train':
 
-  my_weights_name='cnn_weights_'+savename+'.hdf'
+ saveweightname='cnn_weights_'+savename+'.hdf'
 
   train_x_train_y = DataGenerator().generate(Ntrain)
   val_x_val_y = DataGenerator().valgenerate(Nval)
@@ -461,16 +461,14 @@ if mode=='train':
                     validation_steps = valsteps,
                     callbacks=[history,lrate,early_stop,checkpoint,cb])#,
   print(cb.logs)
-
-  saveweightname = weights_dir+my_weights_name+extrastring
   print('------------'*10)
   print('Weights filename =',saveweightname)
   print('------------'*10)
 
 if len(gpuarray)>1:
-	model.save_weights(saveweightname+extrastring, overwrite=True)
+	model.save_weights(saveweightname, overwrite=True)
 else:
-	modeltr.save_weights(saveweightname+extrastring, overwrite=True)
+	modeltr.save_weights(saveweightname, overwrite=True)
 
 print('------------'*10)
 
