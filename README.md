@@ -65,7 +65,7 @@ While this is running, the gpu 1 will start running, which changes the nvidia-sm
 MLstarter.py is a starter machine learning program based off of a modified version of https://arxiv.org/abs/1803.00107self.
 This program trains and tests but performs none of the preprocessing (center,normalize,rotate).
 The input files are ascii and are in the following format [[[X,Y],[C0,C1,...CN],...],truth(1,0),dense0,dense1,...,denseN] where N is the number of colors, [X,Y] are the pixel coordinates (0-37) and dense0...denseN are the inputs to the dense layer.  
-The pixelized images should be normalized to unit intensity.
+The pixelized images should be normalized to unit intensity (ie pt).  Also, if there is any order to the images (ie running over multiple signal sets in order) then the ascii files should be shuffled.
 
 #### Options
 ```
