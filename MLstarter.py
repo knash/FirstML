@@ -8,7 +8,7 @@ import numpy as np
 import json
 np.random.seed(1560)
 import keras
-print("using keras version:",keras.__version__)
+print('using keras version:',keras.__version__)
 from keras.models import Sequential, Model
 from keras.layers import Input, Dense, Dropout, Flatten, Merge
 from keras.layers import Conv2D, MaxPooling2D, ZeroPadding2D
@@ -19,7 +19,7 @@ from keras.utils import np_utils
 from keras.utils import multi_gpu_model
 import shuffle as shf
 import tensorflow as tf
-print("using tensorflow version: ",tf.__version__)
+print('using tensorflow version: ',tf.__version__)
 from keras.backend.tensorflow_backend import set_session
 config = tf.ConfigProto()
 import tensorflow as tf
@@ -78,15 +78,15 @@ parser.add_option('--skipgen', metavar='F', action='store_true',
 
 (options, args) = parser.parse_args()
 
-print("Options summary")
-print("==================")
+print('Options summary')
+print('==================')
 for opt,value in options.__dict__.items():
     print(str(opt) +': '+ str(value))
-print("==================")
+print('==================')
 
 
 
-os.environ["CUDA_VISIBLE_DEVICES"]=options.gpus
+os.environ['CUDA_VISIBLE_DEVICES']=options.gpus
 config.gpu_options.per_process_gpu_memory_fraction = 1.0
 
 set_session(tf.Session(config=config))
@@ -108,7 +108,7 @@ extrastringarray = signalfilename.split('_')
 extrastring = extrastringarray[-1]
 
 post = options.post
-print("Input directory",image_array_dir_in)
+print('Input directory',image_array_dir_in)
 name_sg=str('_'.join(signalfilename.split('_')[:2]))
 name_bg=str('_'.join(backgroundfilename.split('_')[:2]))
 print('Name signal ={}'.format(name_sg))
@@ -144,22 +144,22 @@ ndense=len(densearray)
 learning_rate=[0.3]
 
 if len(gpuarray)==0:
-	logging.error("No GPUs specified")
+	logging.error('No GPUs specified')
 	sys.exit()
 if ndense==0:
-	logging.error("No dense layer indices")
+	logging.error('No dense layer indices')
 	sys.exit()
 if ncolors==0:
-	logging.error("No colors")
+	logging.error('No colors')
 	sys.exit()
 if options.fraction<0.0 or options.fraction>1.0:
-	logging.error("Fraction out of range "+str(options.fraction))
+	logging.error('Fraction out of range '+str(options.fraction))
 	sys.exit()
 if options.mode not in ['train','test']:
-	logging.error("Invalid mode "+options.mode)
+	logging.error('Invalid mode '+options.mode)
 	sys.exit()
-if options.signal=="None" or options.background=="None":
-	logging.error("Need to specify both a signal and a background input file")
+if options.signal=='None' or options.background=='None':
+	logging.error('Need to specify both a signal and a background input file')
 	sys.exit()
 
 ##------------------------------------------------------------------------------
@@ -169,7 +169,7 @@ if options.signal=="None" or options.background=="None":
 def load_graph(model_file):
   graph = tf.Graph()
   graph_def = tf.GraphDef()
-  with open(model_file, "rb") as f:
+  with open(model_file, 'rb') as f:
     graph_def.ParseFromString(f.read())
   with graph.as_default():
     tf.import_graph_def(graph_def)
@@ -364,7 +364,7 @@ lrate=keras.callbacks.LearningRateScheduler(step_decay)
 # Get new learning rate
 early_stop=keras.callbacks.EarlyStopping(monitor='val_loss', min_delta=0.0002, patience=5, verbose=0, mode='auto')
 # patience -- means that if there is no improvement in the cross-validation accuracy greater that min_delta within the following 3 epochs, then it stops
-checkpoint=keras.callbacks.ModelCheckpoint("weights.{epoch:02d}-{val_loss:.2f}.hdf5", monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=True, mode='auto', period=1)
+checkpoint=keras.callbacks.ModelCheckpoint('weights.{epoch:02d}-{val_loss:.2f}.hdf5', monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=True, mode='auto', period=1)
 cb = TimingCallback()
 
 
@@ -373,7 +373,7 @@ cb = TimingCallback()
 ##------------------------------------------------------------------------------
 
 weights_dir = 'weights/'
-os.system("mkdir -p "+weights_dir)
+os.system('mkdir -p '+weights_dir)
 
 
 
@@ -410,22 +410,22 @@ trainfilename='train_sample_'+str(Ntrain)+'_'+str(Nval)+'_'+str(Ntest)+'.dat'
 valfilename='validation_sample_'+str(Ntrain)+'_'+str(Nval)+'_'+str(Ntest)+'.dat'
 testfilename='test_sample_'+str(Ntrain)+'_'+str(Nval)+'_'+str(Ntest)+'.dat'
 
-savename = 'epochs_'+str(epochs)+'_Ntrain_'+str(Ntrain)+"_"+name_sg+"_"+name_bg+'_'+post
+savename = 'epochs_'+str(epochs)+'_Ntrain_'+str(Ntrain)+'_'+name_sg.replace('.dat','_')+name_bg.replace('.dat','_')+post
 
 if not options.skipgen:
   shufobj  = shf.pyshuffle(image_array_dir_in+signalfilename,image_array_dir_in+backgroundfilename,str(Ntrain),str(Nval),str(Ntest))
   shufobj.run()
   print('------------'*10)
-  print("running shuffle")
+  print('running shuffle')
   print('------------'*10)
-  os.system('/localhome/knash/terashuf/terashuf < ' + trainfilename + " > shuffled_"+trainfilename)
-  os.system("mv " + "shuffled_"+trainfilename+" "+ trainfilename)
+  os.system('/localhome/knash/terashuf/terashuf < ' + trainfilename + ' > shuffled_'+trainfilename)
+  os.system('mv ' + 'shuffled_'+trainfilename+' '+ trainfilename)
 
 Ntrain=2*Ntrain
 Nval=2*Nval
 Ntest=2*Ntest
 
-if options.load!="None":
+if options.load!='None':
   my_weights=options.load
   WEIGHTS_FNAME=my_weights
   if os.path.exists(WEIGHTS_FNAME):
@@ -443,7 +443,7 @@ if options.load!="None":
 
 if mode=='train':
 
-  saveweightname='cnn_weights_'+savename+'.hdf'
+  saveweightname=weights_dir+'cnn_weights_'+savename+'.hdf'
 
   train_x_train_y = DataGenerator().generate(Ntrain)
   val_x_val_y = DataGenerator().valgenerate(Nval)
@@ -464,7 +464,6 @@ if mode=='train':
   print('------------'*10)
   print('Weights filename =',saveweightname)
   print('------------'*10)
-
 if len(gpuarray)>1:
 	model.save_weights(saveweightname, overwrite=True)
 else:
@@ -488,7 +487,7 @@ print('Computing test accuracy and ROC curve...')
 ##------------------------------------------------------------------------------
 
 ROC_plots_dir = 'analysis/ROC/'
-os.system("mkdir -p "+ROC_plots_dir)
+os.system('mkdir -p '+ROC_plots_dir)
 
 ##------------------------------------------------------------------------------
 # PREDICT OUTPUT PROBABILITIES
@@ -551,8 +550,8 @@ print('------------'*10)
 print('Output of tagging image as signal = \n',np.array(out_prob)[0:15])
 print('------------'*10)
 
-np.savetxt("outprob.csv", np.array(out_prob), delimiter=",")
-np.savetxt("inprob.csv", np.array(y_test), delimiter=",")
+np.savetxt('outprob.csv', np.array(out_prob), delimiter=',')
+np.savetxt('inprob.csv', np.array(y_test), delimiter=',')
 
 # Make ROC with area under the curve plot
 def generate_results(y_test, y_score):
@@ -563,7 +562,7 @@ def generate_results(y_test, y_score):
     print('tpr lenght',len(tpr))
     rocnums=list(zip(fpr,tpr))
     rocout=open(ROC_plots_dir+'roc_'+savename+'.csv','wb')
-    np.savetxt(rocout,rocnums,fmt="%10.5g",delimiter=',')
+    np.savetxt(rocout,rocnums,fmt='%10.5g',delimiter=',')
 
     print('------------'*10)
     roc_auc = auc(fpr, tpr)
@@ -574,10 +573,10 @@ def generate_results(y_test, y_score):
 generate_results(y_Test, out_prob)
 print('FINISHED.')
 if len(gpuarray)>1:
-	model.save(extrastring+".h5")
+	model.save(extrastring+'.h5')
 else:
-	modeltr.save(extrastring+".h5")
+	modeltr.save(extrastring+'.h5')
 
 print('-----------'*10)
-print("Code execution time = %s minutes" % ((time.time() - start_time)/60))
+print('Code execution time = %s minutes' % ((time.time() - start_time)/60))
 print('-----------'*10)
