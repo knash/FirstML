@@ -434,6 +434,7 @@ if options.load!='None':
       print('------------'*10)
       modeltr.load_weights(WEIGHTS_FNAME)
       print('done')
+      savename+="_loadw"
   else:
     print('Weight file not found')
 
