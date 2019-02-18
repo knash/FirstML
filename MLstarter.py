@@ -76,7 +76,7 @@ parser.add_option('--skipgen', metavar='F', action='store_true',
                   default=False,
                   dest='skipgen',
                   help='skip the train,test,validate set generation (ie if it is already created)')
-parser.add_option('-h','--help', metavar='F', action='store_true',
+parser.add_option('--help', metavar='F', action='store_true',
                   default=False,
                   dest='help',
                   help='print help message')
