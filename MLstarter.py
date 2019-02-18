@@ -501,9 +501,6 @@ tempbatchsize=min([10000,Ntest])
 nbatches=int(Ntest/tempbatchsize)
 Y_Pred_prob= np.empty((0, 2))
 y_test=np.empty((0, 2))
-
-oldgraph = copy.copy((tf.Session()).graph)
-graph = load_graph("output_graph.pb")
 Ntesttry=0
 for ibatch in range(nbatches+1):
   x_test_batch=[]
