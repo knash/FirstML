@@ -443,7 +443,7 @@ if options.load!="None":
 
 if mode=='train':
 
- saveweightname='cnn_weights_'+savename+'.hdf'
+  saveweightname='cnn_weights_'+savename+'.hdf'
 
   train_x_train_y = DataGenerator().generate(Ntrain)
   val_x_val_y = DataGenerator().valgenerate(Nval)
