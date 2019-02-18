@@ -79,10 +79,6 @@ parser.add_option('--skipgen', metavar='F', action='store_true',
 
 (options, args) = parser.parse_args()
 
-if options.help:
-  print(helm)
-  sys.exit()
-
 print("Options summary")
 print("==================")
 for opt,value in options.__dict__.items():
