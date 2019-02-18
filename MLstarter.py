@@ -1,5 +1,4 @@
-#example usage: FirstML.py -s SIGforPhoAll.dat -b QCDconstpt.dat -c 0,1,2,3,4,5 -d 1,2,3,4,5,6,7,8,9,10,11,12 -p firstMLtesting
-##-------------------------------------------------------------------------------
+#example: python3 MLstarter.py -s SIGforPhoAll.dat -b QCDconstpt.dat -c 0,1,2,3,4,5 -d 1,2,3,4,5,6,7,8,9,10,11,12 -p test -f 0.2
 #LOAD LIBRARIES
 ##-------------------------------------------------------------------------------
 
