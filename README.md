@@ -8,15 +8,58 @@ ssh into hexcms and then:
 ssh -X hexcmsusername@HEXDL
 ```
 enter hexcms password
-
-#### Checkout from github
+#### Checkout from github (somewhere with some space)
 ```
 git clone https://github.com/knash/FirstML.git
 ```
 #### Run test program
+type
 ```
-python3 MLstarter.py -s SIGforPhoAll.dat -b QCDconstpt.dat -c 0,1,2,3,4,5 -d 1,2,3,4,5,6,7,8,9,10,11,12 -p test -f 0.2
+nvidia-smi
 ```
+to see if any gpus are in use.  You should see something like
+```
+HEXDL:~/FirstML> nvidia-smi
+Mon Feb 18 09:35:33 2019       
++-----------------------------------------------------------------------------+
+| NVIDIA-SMI 396.26                 Driver Version: 396.26                    |
+|-------------------------------+----------------------+----------------------+
+| GPU  Name        Persistence-M| Bus-Id        Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp  Perf  Pwr:Usage/Cap|         Memory-Usage | GPU-Util  Compute M. |
+|===============================+======================+======================|
+|   0  TITAN Xp            Off  | 00000000:01:00.0  On |                  N/A |
+| 38%   51C    P8    19W / 250W |     74MiB / 12192MiB |      0%      Default |
++-------------------------------+----------------------+----------------------+
+|   1  TITAN Xp            Off  | 00000000:02:00.0 Off |                  N/A |
+| 23%   27C    P8    16W / 250W |      2MiB / 12196MiB |      0%      Default |
++-------------------------------+----------------------+----------------------+
+
++-----------------------------------------------------------------------------+
+| Processes:                                                       GPU Memory |
+|  GPU       PID   Type   Process name                             Usage      |
+|=============================================================================|
+|    0      1673      G   /usr/lib/xorg/Xorg                            71MiB |
++-----------------------------------------------------------------------------+
+```
+Here, no gpu is in use, so in the following command you would use either -g 0 or -g 1 to choose the gpu to run on.
+
+```
+cd FirstML
+python3 MLstarter.py -s SIGforPhoAll.dat -b QCDconstpt.dat -c 0,1,2,3,4,5 -d 1,2,3,4,5,6,7,8,9,10,11,12 -p test -f 0.2 -e 2 -g 1
+```
+Note that for a real training use -f 1.0 and -e 1000
+
+
+While this is running, the gpu 1 will start running, which changes the nvidia-smi section to look something like
+
+```
++-------------------------------+----------------------+----------------------+
+|   1  TITAN Xp            Off  | 00000000:02:00.0 Off |                  N/A |
+| 23%   38C    P2   227W / 250W |  11317MiB / 12196MiB |     84%      Default |
++-------------------------------+----------------------+----------------------+
+```
+
+
 
 #### Description
 MLstarter.py is a starter machine learning program based off of a modified version of https://arxiv.org/abs/1803.00107self.
