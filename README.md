@@ -1,5 +1,5 @@
 # FirstML
-Implementation of Deeptop training for newcomers:
+Implementation of Imagetop training for newcomers:
 
 ### Set up
 #### SSH into HEXDL
@@ -8,10 +8,19 @@ ssh into hexcms and then:
 ssh -X hexcmsusername@HEXDL
 ```
 enter hexcms password
+
+#### Required python3 modules (if not installed)
+```
+pip3 install numpy
+pip3 install scipy
+pip3 install pandas
+```
+
 #### Checkout from github (somewhere with some space)
 ```
 git clone https://github.com/knash/FirstML.git
 ```
+
 #### Run test program
 type
 ```
@@ -49,7 +58,6 @@ python3 MLstarter.py -s SIGforPhoAll.dat -b QCDconstpt.dat -c 0,1,2,3,4,5 -d 1,2
 ```
 Note that for a real training use -f 1.0 and -e 1000
 
-
 While this is running, the gpu 1 will start running, which changes the nvidia-smi section to look something like
 
 ```
@@ -59,6 +67,26 @@ While this is running, the gpu 1 will start running, which changes the nvidia-sm
 +-------------------------------+----------------------+----------------------+
 ```
 
+As the script runs, the categorial accuracy should improve toward convergence with the final
+test accuracy being a good measure of sensitivity.  Also, the script prints the area under the ROC curve ("AUC") which can be used as a
+measure of sensitivity as well
+
+After the script runs, there will be two new files in the weights/ directory. The weights_*name*.hdf5 and model_*name*.h5.
+The weights_*name*.hdf5 file can be loaded back into keras for classification (see the "-l" option below).  The model_*name*.h5 file
+has both the weights and model architecture and can be loaded into bare tensorflow (and therefore used with CMSSW).
+Also output is a file in the analysis/ROC folder with the ROC curve X and Y coordinates in CSV format.
+
+#### Import into CMSSW
+The format used for loading models into tensorflow is protobuf (.pb).  For this we use a private repository aptly named keras_to_tensorflow.
+```
+git clone https://github.com/amir-abdi/keras_to_tensorflow.git
+cd keras-to-tensorflow
+eval python3 k2tf_convert.py -m ../weightsname.h5 -n 1
+```
+
+#### ascii file creation
+These are created through crab.  See the description here:
+https://github.com/knash/NanoHRT/tree/ForTraining
 
 
 #### Description

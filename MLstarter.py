@@ -574,9 +574,9 @@ def generate_results(y_test, y_score):
 generate_results(y_Test, out_prob)
 print('FINISHED.')
 if len(gpuarray)>1:
-	model.save(extrastring+'.h5')
+	model.save(weights_dir+'model_'+savename+'.h5')
 else:
-	modeltr.save(extrastring+'.h5')
+	modeltr.save(weights_dir+'model_'+savename+'.h5')
 
 print('-----------'*10)
 print('Code execution time = %s minutes' % ((time.time() - start_time)/60))
