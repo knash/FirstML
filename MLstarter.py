@@ -93,7 +93,7 @@ set_session(tf.Session(config=config))
 
 start_time = time.time()
 
-np.set_printoptions(threshold=np.nan)
+#np.set_printoptions(threshold=np.nan)
 
 ##------------------------------------------------------------------------------
 # Global variables
