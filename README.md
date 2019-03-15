@@ -81,7 +81,7 @@ The format used for loading models into tensorflow is protobuf (.pb).  For this 
 ```
 git clone https://github.com/amir-abdi/keras_to_tensorflow.git
 cd keras-to-tensorflow
-eval python3 k2tf_convert.py -m ../model_*name*.h5 -n 1
+eval python3 k2tf_convert.py -m ../model_name.h5 -n 1
 ```
 
 #### ascii file creation
