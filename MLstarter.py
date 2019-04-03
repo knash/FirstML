@@ -104,13 +104,13 @@ image_array_dir_in=options.directory
 signalfilename= options.signal
 backgroundfilename=options.background
 
-extrastringarray = signalfilename.split('_')
-extrastring = extrastringarray[-1]
+extrastringarray = signalfilename.split('__')
+extrastring = extrastringarray[-1].replace("/","-")
 
 post = options.post
 print('Input directory',image_array_dir_in)
-name_sg=str('_'.join(signalfilename.split('_')[:2]))
-name_bg=str('_'.join(backgroundfilename.split('_')[:2]))
+name_sg=str('__'.join(signalfilename.split('__')[:2]))
+name_bg=str('__'.join(backgroundfilename.split('__')[:2]))
 print('Name signal ={}'.format(name_sg))
 print('Name background ={}'.format(name_bg))
 print('-----------'*10)
@@ -411,7 +411,7 @@ valfilename='validation_sample_'+str(Ntrain)+'_'+str(Nval)+'_'+str(Ntest)+'.dat'
 testfilename='test_sample_'+str(Ntrain)+'_'+str(Nval)+'_'+str(Ntest)+'.dat'
 
 savename = 'epochs_'+str(epochs)+'_Ntrain_'+str(Ntrain)+'_'+name_sg.replace('.dat','_')+name_bg.replace('.dat','_')+post
-
+savename = savename.replace("/","-")
 if not options.skipgen:
   shufobj  = shf.pyshuffle(image_array_dir_in+signalfilename,image_array_dir_in+backgroundfilename,str(Ntrain),str(Nval),str(Ntest))
   shufobj.run()
