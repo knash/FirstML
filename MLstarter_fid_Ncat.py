@@ -99,6 +99,14 @@ parser.add_option('-X', '--ldense', metavar='F', type='int', action='store',
                   default	=	3,
                   dest		=	'ldense',
                   help		=	'ldense')
+parser.add_option('-Y', '--nclass', metavar='F', type='int', action='store',
+                  default	=	7,
+                  dest		=	'nclass',
+                  help		=	'nclass')
+parser.add_option('-T', '--testname', metavar='F', type='string', action='store',
+                  default	=	"None",
+                  dest		=	'testname',
+                  help		=	'testname')
 (options, args) = parser.parse_args()
 
 print('Options summary')
@@ -156,7 +164,7 @@ npoints = 38
 img_rows, img_cols = npoints-1, npoints-1
 N_pixels=np.power(npoints-1,2)
 my_batch_size = options.batchsize
-num_classes = 2
+num_classes = options.nclass
 epochs =int(options.epochs)
 sample_relative_size=float(options.fraction)
 mode=options.mode
@@ -254,7 +262,7 @@ class DataGenerator(object):
           for ijet in range(self.batch_size):
              xy=next(traingenerator)
              x_val.append(xy[0])
-             y_val.append(xy[1])
+             y_val.append(xy[-4])
              z_val.append([])
              for iden in densearray:
                #if iden == 16:
@@ -282,7 +290,7 @@ class DataGenerator(object):
           for ijet in range(self.batch_size):
              xy=next(valgenerator)
              x_val.append(xy[0])
-             y_val.append(xy[1])
+             y_val.append(xy[-4])
              z_val.append([])
              for iden in densearray:
                #if iden == 16:
@@ -394,7 +402,7 @@ lrate=keras.callbacks.LearningRateScheduler(step_decay)
 # Get new learning rate
 early_stop=keras.callbacks.EarlyStopping(monitor='val_loss', min_delta=0.0002, patience=options.patience, verbose=0, mode='auto')
 # patience -- means that if there is no improvement in the cross-validation accuracy greater that min_delta within the following 3 epochs, then it stops
-checkpoint=keras.callbacks.ModelCheckpoint('weights.{epoch:02d}-{val_loss:.2f}.hdf5', monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=True, mode='auto', period=1)
+checkpoint=keras.callbacks.ModelCheckpoint('weights.{epoch:02d}-{val_loss:.2f}-{val_categorical_accuracy:.4f}.hdf5', monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=True, mode='auto', period=1)
 cb = TimingCallback()
 
 
@@ -523,13 +531,22 @@ os.system('mkdir -p '+ROC_plots_dir)
 ##------------------------------------------------------------------------------
 # PREDICT OUTPUT PROBABILITIES
 ##------------------------------------------------------------------------------
-
+if options.testname!="None":
+  print("OVERRIDE testname",options.testname)
+  testfilename=options.testname
 tempgenerator=(json.loads(s) for s in open(testfilename))
+#for sss in tempgenerator:print(sss)
+
+
 tempbatchsize=min([10000,Ntest])
 nbatches=int(Ntest/tempbatchsize)
-Y_Pred_prob= np.empty((0, 2))
-y_test=np.empty((0, 2))
+Y_Pred_prob= np.empty((0, num_classes))
+y_test=np.empty((0, num_classes))
 Ntesttry=0
+
+arrm=[]
+fs = open("tempNcatsig"+post+".dat","w+")
+fb = open("tempNcatbkg"+post+".dat","w+")
 for ibatch in range(nbatches+1):
   x_test_batch=[]
   y_test_batch=[]
@@ -539,10 +556,20 @@ for ibatch in range(nbatches+1):
     for ijet in range(ijetmax):
       Ntesttry+=1
       xy=next(tempgenerator)
+      #print(len(xy))
+      if xy[-2]<0.5 or xy[-2]>0.75:
+        continue
+      #if xy[16]<0.5:	
+      #  continue
+      #print (xy[-2],xy[-3])
+      arrm.append(xy[-3])
       x_test_batch.append(xy[0])
-      y_test_batch.append(xy[1])
+      y_test_batch.append(xy[-4])
       z_test_batch.append([])
+
       for iden in densearray:
+
+         
         #if iden == 16:
          #        xy[iden]/=2000.0    
         z_test_batch[-1].append(xy[iden])
@@ -550,8 +577,28 @@ for ibatch in range(nbatches+1):
     testimages=expand_array(x_test_batch)
     z_test_batch=np.array(z_test_batch)
     Y_Pred_batch = model.predict([testimages,z_test_batch])
+     
     Y_Pred_prob=np.concatenate((Y_Pred_prob,Y_Pred_batch))
     y_test=np.concatenate((y_test,y_test_batch))
+    for yyy in range(0,len(Y_Pred_prob)):
+      #print(Y_Pred_prob[yyy],y_test[yyy],arrm[yyy])
+      QCDcont=0
+      SIGcont=0
+      for zzz in range(0,len(Y_Pred_prob[yyy])):
+        if zzz<=3:
+          QCDcont+=Y_Pred_prob[yyy][zzz]
+        else:
+          SIGcont+=Y_Pred_prob[yyy][zzz]
+      strtowrite = str((SIGcont)/(SIGcont+QCDcont))+","+str(arrm[yyy])
+      #print (y_test[yyy])
+      if y_test[yyy][0]==1. or y_test[yyy][1]==1. or y_test[yyy][2]==1. or y_test[yyy][3]==1.:
+         fb.write(strtowrite+"\n")
+      else:
+         fs.write(strtowrite+"\n")
+      #print(arrm[yyy],Y_Pred_prob[yyy],y_test[yyy])
+
+
+
 
 print('begin printing CNN output')
 print('------------'*10)
