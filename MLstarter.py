@@ -496,7 +496,10 @@ if mode=='train':
   print('Weights filename =',saveweightname)
   print('------------'*10)
 
-modeltr.save_weights(saveweightname, overwrite=True)
+if len(gpuarray)>1:
+	model.save_weights(saveweightname, overwrite=True)
+else:
+	modeltr.save_weights(saveweightname, overwrite=True)
 
 print('------------'*10)
 
@@ -604,7 +607,10 @@ def generate_results(y_test, y_score):
 generate_results(y_Test, out_prob)
 print('FINISHED.')
 print('Saving model',weights_dir+'model_'+savename+'.h5')
-modeltr.save(weights_dir+'model_'+savename+'.h5')
+if len(gpuarray)>1:
+	model.save(weights_dir+'model_'+savename+'.h5')
+else:
+	modeltr.save(weights_dir+'model_'+savename+'.h5')
 
 print('-----------'*10)
 print('Code execution time = %s minutes' % ((time.time() - start_time)/60))
