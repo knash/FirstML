@@ -84,15 +84,15 @@ parser.add_option('-L', '--learnrate', metavar='F', type='float', action='store'
                   dest		=	'learnrate',
                   help		=	'learnrate')
 parser.add_option('-P', '--patience', metavar='F', type='int', action='store',
-                  default	=	5,
+                  default	=	7,
                   dest		=	'patience',
                   help		=	'patience')
 parser.add_option('-C', '--nconv', metavar='F', type='int', action='store',
-                  default	=	64,
+                  default	=	128,
                   dest		=	'nconv',
                   help		=	'nconv')
 parser.add_option('-N', '--ndense', metavar='F', type='int', action='store',
-                  default	=	256,
+                  default	=	1024,
                   dest		=	'ndense',
                   help		=	'ndense')
 parser.add_option('-X', '--ldense', metavar='F', type='int', action='store',
@@ -103,6 +103,10 @@ parser.add_option('-Y', '--nclass', metavar='F', type='int', action='store',
                   default	=	7,
                   dest		=	'nclass',
                   help		=	'nclass')
+parser.add_option('-F', '--fid', metavar='F', type='string', action='store',
+                  default	=	'all',
+                  dest		=	'fid',
+                  help		=	'fid')
 parser.add_option('-T', '--testname', metavar='F', type='string', action='store',
                   default	=	"None",
                   dest		=	'testname',
@@ -137,6 +141,12 @@ backgroundfilename=options.background
 
 extrastringarray = signalfilename.split('__')
 extrastring = extrastringarray[-1].replace("/","-")
+
+fidstr=options.fid
+fidarr = []
+if fidstr!="all":
+  for ff in fidstr.split(","):
+    fidarr.append(int(ff))
 
 post = options.post
 print('Input directory',image_array_dir_in)
@@ -543,6 +553,14 @@ nbatches=int(Ntest/tempbatchsize)
 Y_Pred_prob= np.empty((0, num_classes))
 y_test=np.empty((0, num_classes))
 Ntesttry=0
+#ptlims=[0.0,999.0]
+#masslims = [0.0,999.0]
+
+#ptlims=[0.15,2.5]
+#masslims = [0.2,1.4]
+
+ptlims = [0.1,2.5]
+masslims = [0.2,0.9]
 
 arrm=[]
 fs = open("tempNcatsig"+post+".dat","w+")
@@ -557,22 +575,22 @@ for ibatch in range(nbatches+1):
       Ntesttry+=1
       xy=next(tempgenerator)
       #print(len(xy))
-      if xy[-2]<0.5 or xy[-2]>0.75:
-        continue
+      #if xy[-2]<0.5 or xy[-2]>0.75:
+      #  continue
       #if xy[16]<0.5:	
       #  continue
       #print (xy[-2],xy[-3])
-      arrm.append(xy[-3])
+      arrm.append([xy[-3],xy[-2]])
       x_test_batch.append(xy[0])
       y_test_batch.append(xy[-4])
       z_test_batch.append([])
 
       for iden in densearray:
-
-         
         #if iden == 16:
          #        xy[iden]/=2000.0    
         z_test_batch[-1].append(xy[iden])
+      #z_test_batch[-1][-2] = min(max(z_test_batch[-1][-2],masslims[0]),masslims[1])
+      #z_test_batch[-1][-1] = min(max(z_test_batch[-1][-1],ptlims[0]),ptlims[1])
     x_test_batch,y_test_batch= prepare_keras(x_test_batch,y_test_batch)
     testimages=expand_array(x_test_batch)
     z_test_batch=np.array(z_test_batch)
@@ -588,8 +606,11 @@ for ibatch in range(nbatches+1):
         if zzz<=3:
           QCDcont+=Y_Pred_prob[yyy][zzz]
         else:
-          SIGcont+=Y_Pred_prob[yyy][zzz]
-      strtowrite = str((SIGcont)/(SIGcont+QCDcont))+","+str(arrm[yyy])
+          if fidstr=="all":
+             SIGcont+=Y_Pred_prob[yyy][zzz]
+          elif zzz in fidarr:
+             SIGcont+=Y_Pred_prob[yyy][zzz]
+      strtowrite = str((SIGcont)/(SIGcont+QCDcont))+","+str(arrm[yyy][0])+","+str(arrm[yyy][1])
       #print (y_test[yyy])
       if y_test[yyy][0]==1. or y_test[yyy][1]==1. or y_test[yyy][2]==1. or y_test[yyy][3]==1.:
          fb.write(strtowrite+"\n")
