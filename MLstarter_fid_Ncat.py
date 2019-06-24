@@ -75,6 +75,11 @@ parser.add_option('--skipgen', metavar='F', action='store_true',
                   default=False,
                   dest='skipgen',
                   help='skip the train,test,validate set generation (ie if it is already created)')
+
+parser.add_option('--hotvr', metavar='F', action='store_true',
+                  default=False,
+                  dest='hotvr',
+                  help='hotvr')
 parser.add_option('-B', '--batchsize', metavar='F', type='int', action='store',
                   default	=	128,
                   dest		=	'batchsize',
@@ -84,15 +89,15 @@ parser.add_option('-L', '--learnrate', metavar='F', type='float', action='store'
                   dest		=	'learnrate',
                   help		=	'learnrate')
 parser.add_option('-P', '--patience', metavar='F', type='int', action='store',
-                  default	=	7,
+                  default	=	5,
                   dest		=	'patience',
                   help		=	'patience')
 parser.add_option('-C', '--nconv', metavar='F', type='int', action='store',
-                  default	=	128,
+                  default	=	64,
                   dest		=	'nconv',
                   help		=	'nconv')
 parser.add_option('-N', '--ndense', metavar='F', type='int', action='store',
-                  default	=	1024,
+                  default	=	256,
                   dest		=	'ndense',
                   help		=	'ndense')
 parser.add_option('-X', '--ldense', metavar='F', type='int', action='store',
@@ -122,7 +127,7 @@ print('==================')
 
 
 os.environ['CUDA_VISIBLE_DEVICES']=options.gpus
-config.gpu_options.per_process_gpu_memory_fraction = 1.0
+config.gpu_options.per_process_gpu_memory_fraction = 0.9
 
 set_session(tf.Session(config=config))
 
@@ -183,7 +188,11 @@ ncolors=len(colarray)
 ndense=len(densearray)
 
 learning_rate=[options.learnrate]
-
+ishotvr = options.hotvr
+NQCD=4
+if ishotvr:
+	NQCD=1
+	print("HotVR")
 if len(gpuarray)==0:
 	logging.error('No GPUs specified')
 	sys.exit()
@@ -603,7 +612,7 @@ for ibatch in range(nbatches+1):
       QCDcont=0
       SIGcont=0
       for zzz in range(0,len(Y_Pred_prob[yyy])):
-        if zzz<=3:
+        if zzz<=NQCD-1:
           QCDcont+=Y_Pred_prob[yyy][zzz]
         else:
           if fidstr=="all":
@@ -612,9 +621,15 @@ for ibatch in range(nbatches+1):
              SIGcont+=Y_Pred_prob[yyy][zzz]
       strtowrite = str((SIGcont)/(SIGcont+QCDcont))+","+str(arrm[yyy][0])+","+str(arrm[yyy][1])
       #print (y_test[yyy])
-      if y_test[yyy][0]==1. or y_test[yyy][1]==1. or y_test[yyy][2]==1. or y_test[yyy][3]==1.:
-         fb.write(strtowrite+"\n")
-      else:
+      issig=True
+      for iq in range(0,NQCD):
+         if y_test[yyy][iq]==1.:
+            #print("bkg",strtowrite)
+            fb.write(strtowrite+"\n")
+            issig=False
+            break
+      if issig:
+         #print("sig",strtowrite)
          fs.write(strtowrite+"\n")
       #print(arrm[yyy],Y_Pred_prob[yyy],y_test[yyy])
 

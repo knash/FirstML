@@ -10,13 +10,18 @@ ROOT.PyConfig.IgnoreCommandLineOptions = True
 
 datfiles = glob.glob(str(sys.argv[1]))
 datfilessig = glob.glob(str(sys.argv[2]))
-
-Masshistpre =  TH1F("Masshistpre",	"Masshistpre",		100, 0,3*172.5 )
-MasshistpostL =  TH1F("MasshistpostL",	"MasshistpostL",		100, 0,3*172.5 )
-MasshistpostM =  TH1F("MasshistpostM",	"MasshistpostM",		100, 0,3*172.5 )
-MasshistpostT =  TH1F("MasshistpostT",	"MasshistpostT",		100, 0,3*172.5 )
+ptbinsform = [[0.15,0.25],[0.25,0.5],[0.5,0.75],[0.75,1.0],[1.0,1.25]]
+Mplots={}
+for ptb in ptbinsform:
+	ptstrs = [str(int(2000.0*ptb[0])),str(int(2000.0*ptb[1]))]
+	ptstr = ptstrs[0]+"to"+ptstrs[1]
+	Mplots[ptstr+"pre"] =  TH1F("Masshistpre"+ptstr,	"Masshistpre"+ptstr,		100, 0,3*172.5 )
+	Mplots[ptstr+"postL"] =  TH1F("MasshistpostL"+ptstr,	"MasshistpostL"+ptstr,		100, 0,3*172.5 )
+	Mplots[ptstr+"postM"] =  TH1F("MasshistpostM"+ptstr,	"MasshistpostM"+ptstr,		100, 0,3*172.5 )
+	Mplots[ptstr+"postT"] =  TH1F("MasshistpostT"+ptstr,	"MasshistpostT"+ptstr,		100, 0,3*172.5 )
 Masshist2d =  TH2F("Masshist2d",	"Masshist2d",		40, 0,3,200,0,1 )
 Masshist2dptpre =  TH2F("Masshist2dptpre",	"Masshist2dptpre",		50, 0,3,20,0,2 )
+
 Masshist2dptpostL =  TH2F("Masshist2dptpostL",	"Masshist2dptpostL",		50, 0,3,20,0,2 )
 Masshist2dptpostM =  TH2F("Masshist2dptpostM",	"Masshist2dptpostM",		50, 0,3,20,0,2 )
 Masshist2dptpostT =  TH2F("Masshist2dptpostT",	"Masshist2dptpostT",		50, 0,3,20,0,2 )
@@ -29,7 +34,7 @@ qcdD = []
 sigN = []
 sigNwmass = []
 sigD = []
-reso=700
+reso=600
 for iitop in xrange(reso):
 	qcdD.append(0.)
 	qcdN.append(0.)
@@ -42,15 +47,18 @@ for iitop in xrange(reso):
 
 wmeff = 0.0
 wmeffD = 0.0
-linemax = 200000000
+linemax = 20000000
 ptlims=[0.5,0.75]
-
-#t
-#masslims = [0.65,1.3]
-#H
-#masslims = [0.5,0.9]
-#W
-masslims = [55./172.5,95./172.5]
+cust="wwlep"
+if cust=="top":
+	#masslims = [0.63,1.28]
+	masslims = [0.83,1.24]
+if cust=="h":
+	masslims = [0.5,0.9]
+if cust=="w":
+	masslims = [55./172.5,95./172.5]
+if cust=="wwlep":
+	masslims = [0.3,5.0]
 
 for datfile in datfilessig:
 	with open(datfile, "r") as ins:
@@ -60,13 +68,13 @@ for datfile in datfilessig:
 			#print nline
  			if nline >linemax:break
 
-
-			curpt = float(line.split(",")[-1])
+			splitv = line.split(",")
+			curpt = float(splitv[-1])
 			if not ((curpt>ptlims[0]) and (curpt<ptlims[1])):
 				continue
-			curmass = float(line.split(",")[-2])
+			curmass = float(splitv[-2])
 			#print line
-			curnn = float(line.split(",")[-3])
+			curnn = float(splitv[-3])
 			dnnsig.Fill(curnn)
 			wmeffD+=1.0
 			if (curmass>masslims[0]) and (curmass<masslims[1]):
@@ -75,7 +83,7 @@ for datfile in datfilessig:
 			#print curmass,curnn
 			for iitop in xrange(reso):
 				sigD[iitop]+=1.0
-				nnval = 1.0-(float(iitop)/float(reso))**5
+				nnval = 1.0-(float(iitop)/float(reso))**6
 
 
 				if curnn>nnval:
@@ -96,19 +104,48 @@ for datfile in datfiles:
  		for line in ins:
 			#print nline
  			if nline >linemax:break
+			splitv = line.split(",")
+			curpt = float(splitv[-1])
+			curmass = float(splitv[-2])
+			curnn = float(splitv[-3])
 
-			curpt = float(line.split(",")[-1])
+
+			for ptb in ptbinsform:
+				if ((curpt>ptb[0]) and (curpt<ptb[1])):
+					ptstrs = [str(int(2000.0*ptb[0])),str(int(2000.0*ptb[1]))]
+					ptstr = ptstrs[0]+"to"+ptstrs[1]
+					Mplots[ptstr+"pre"].Fill(curmass*172.5)
+					
+					if float(curnn)>0.6:
+						Mplots[ptstr+"postL"].Fill(curmass*172.5)
+					
+					if float(curnn)>0.9:
+						Mplots[ptstr+"postM"].Fill(curmass*172.5)
+						
+					if float(curnn)>0.99:
+						Mplots[ptstr+"postT"].Fill(curmass*172.5)
 			if not ((curpt>ptlims[0]) and (curpt<ptlims[1])):
 				continue
-			curmass = float(line.split(",")[-2])
-			curnn = float(line.split(",")[-3])
+			Masshist2d.Fill(curmass,curnn)
+			Masshist2dptpre.Fill(curmass,curpt)
+			if float(curnn)>0.6:
+				
+				Masshist2dptpostL.Fill(curmass,curpt)
+			if float(curnn)>0.9:
+				
+				Masshist2dptpostM.Fill(curmass,curpt)
+			if float(curnn)>0.99:
+				
+				Masshist2dptpostT.Fill(curmass,curpt)
+
+
 			dnnbkg.Fill(curnn)
 			wbgmeffD+=1.0
 			if (curmass>masslims[0]) and (curmass<masslims[1]):
 					wbgmeff+=1.0
 			for iitop in xrange(reso):
 				qcdD[iitop]+=1.0
-				nnval = 1.0-(float(iitop)/float(reso))**5
+				nnval = 1.0-(float(iitop)/float(reso))**6
 				
 				if curnn>nnval:
 						qcdN[iitop]+=1.0
@@ -116,19 +153,7 @@ for datfile in datfiles:
 						qcdNwmass[iitop]+=1.0
 						nline+=1
 		
-			Masshistpre.Fill(curmass*172.5)
-			Masshist2d.Fill(curmass,curnn)
-			Masshist2dptpre.Fill(curmass,curpt)
-			if float(curnn)>0.6:
-				MasshistpostL.Fill(curmass*172.5)
-				Masshist2dptpostL.Fill(curmass,curpt)
-			if float(curnn)>0.9:
-				MasshistpostM.Fill(curmass*172.5)
-				#print line
-				Masshist2dptpostM.Fill(curmass,curpt)
-			if float(curnn)>0.99:
-				MasshistpostT.Fill(curmass*172.5)
-				Masshist2dptpostT.Fill(curmass,curpt)
+
 
 bgeff=float(wbgmeff)/float(wbgmeffD)
 
@@ -140,37 +165,42 @@ for iitop in xrange(reso):
 
 	ROC.SetPoint(iitop,sigN[iitop]/sigD[iitop],qcdN[iitop]/qcdD[iitop])
 	ROCwmass.SetPoint(iitop,sigNwmass[iitop]/sigD[iitop],qcdNwmass[iitop]/qcdD[iitop])
-
-print "nncut bkg red"
-print "L",bgeff*100.*MasshistpostL.Integral()/(Masshistpre.Integral()+MasshistpostL.Integral()),"%"
-print "M",bgeff*100.*MasshistpostM.Integral()/(Masshistpre.Integral()+MasshistpostM.Integral()),"%"
-print "T",bgeff*100.*MasshistpostT.Integral()/(Masshistpre.Integral()+MasshistpostT.Integral()),"%"
 output = ROOT.TFile("histosQCDmassana_"+str(sys.argv[1]).replace(".dat","")+".root","recreate")
 output.cd()
+print "nncut bkg red"
 prelim = TLatex()
 prelim.SetNDC()
+canvs = []
+for ptb in ptbinsform:
+	ptstrs = [str(int(2000.0*ptb[0])),str(int(2000.0*ptb[1]))]
+	ptstr = ptstrs[0]+"to"+ptstrs[1]
+	print ptstr,"L",bgeff*100.*Mplots[ptstr+"postL"].Integral()/(Mplots[ptstr+"pre"].Integral()+Mplots[ptstr+"postL"].Integral()),"%"
+	print ptstr,"M",bgeff*100.*Mplots[ptstr+"postM"].Integral()/(Mplots[ptstr+"pre"].Integral()+Mplots[ptstr+"postM"].Integral()),"%"
+	print ptstr,"T",bgeff*100.*Mplots[ptstr+"postT"].Integral()/(Mplots[ptstr+"pre"].Integral()+Mplots[ptstr+"postT"].Integral()),"%"
+	 
+	canvs.append(TCanvas("c"+ptstr))
+	Mplots[ptstr+"pre"].Scale(1.0/Mplots[ptstr+"pre"].Integral())
+	Mplots[ptstr+"postM"].Scale(1.0/Mplots[ptstr+"postM"].Integral())
+
+	Mplots[ptstr+"pre"].SetLineColor(1)
+	Mplots[ptstr+"postM"].SetLineColor(2)
+	Mplots[ptstr+"pre"].SetTitle(";M_{SD} GeV;A.U.")
+	Mplots[ptstr+"pre"].SetStats(0)
+	Mplots[ptstr+"pre"].Draw("hist")
+	Mplots[ptstr+"postM"].Draw("samehist")
+	prelim.DrawLatex( 0.3, 0.75, ptstrs[0]+" GeV < p_{T} < "+ptstrs[1]+" GeV" )
+	canvs[-1].Write("masscomp"+ptstr)
 
 
 
-Masshistpre.Write("Masshistpre")
-MasshistpostL.Write("MasshistpostL")
-MasshistpostM.Write("MasshistpostM")
-MasshistpostT.Write("MasshistpostT")
+
+
+
+
 Masshist2dptpostL.Write("Masshist2dptpostL")
 Masshist2dptpostM.Write("Masshist2dptpostM")
 Masshist2dptpostT.Write("Masshist2dptpostT")
-c1 = TCanvas("c1")
-Masshistpre.Scale(1.0/Masshistpre.Integral())
-MasshistpostM.Scale(1.0/MasshistpostM.Integral())
 
-Masshistpre.SetLineColor(1)
-MasshistpostM.SetLineColor(2)
-Masshistpre.SetTitle(";M_{SD} GeV;A.U.")
-Masshistpre.SetStats(0)
-Masshistpre.Draw("hist")
-MasshistpostM.Draw("samehist")
-prelim.DrawLatex( 0.3, 0.75, "500 GeV < p_{T} < 2000 GeV" )
-c1.Write("masscomp")
 
 Masshist2d.Write("Masshist2d")
 
@@ -187,15 +217,19 @@ c2 = TCanvas("c2")
 
 
 
-
+ptlimstrs = [str(int(2000.0*ptlims[0])),str(int(2000.0*ptlims[1]))]
 ROCwmass.Draw()
-prelim.DrawLatex( 0.15, 0.85, "500 GeV < p_{T} < 2000 GeV" )
-
-prelim.DrawLatex( 0.44, 0.55, "N_{2}^{DDT}" )
-TM = TMarker(0.4, 0.01, 23)
-TM.SetMarkerSize(2)
-TM.SetMarkerColor(4)
-TM.Draw()
+prelim.DrawLatex( 0.15, 0.85, ptlimstrs[0]+" GeV < p_{T} < "+ptlimstrs[1]+" GeV" )
+if cust=="w" or cust=="top":
+	if cust=="w":
+		prelim.DrawLatex( 0.44, 0.55, "N_{2}^{DDT}+msd" )
+		TM = TMarker(0.4, 0.01, 23)
+	if cust=="top":
+		prelim.DrawLatex( 0.44, 0.60, "#tau_{32}+msd+subjetb" )
+		TM = TMarker(0.4, 0.017, 23)
+	TM.SetMarkerSize(2)
+	TM.SetMarkerColor(4)
+	TM.Draw()
 c2.SetLogy()
 c2.Write("rocwmass")
 ROC.Draw()
