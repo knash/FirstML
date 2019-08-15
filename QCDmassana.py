@@ -47,18 +47,21 @@ for iitop in xrange(reso):
 
 wmeff = 0.0
 wmeffD = 0.0
-linemax = 20000000
+linemax = 2000000
 ptlims=[0.5,0.75]
-cust="wwlep"
+Drawmarker=False
+cust="ww"
 if cust=="top":
 	#masslims = [0.63,1.28]
-	masslims = [0.83,1.24]
+	masslims = [0.66,1.4]
+	Drawmarker=False
 if cust=="h":
 	masslims = [0.5,0.9]
 if cust=="w":
 	masslims = [55./172.5,95./172.5]
-if cust=="wwlep":
-	masslims = [0.3,5.0]
+	Drawmarker=True
+if cust=="wwlep" or cust=="hwwlep" or cust=="hww" or cust=="ww":
+	masslims = [0.3,99.0]
 
 for datfile in datfilessig:
 	with open(datfile, "r") as ins:
@@ -179,17 +182,18 @@ for ptb in ptbinsform:
 	print ptstr,"T",bgeff*100.*Mplots[ptstr+"postT"].Integral()/(Mplots[ptstr+"pre"].Integral()+Mplots[ptstr+"postT"].Integral()),"%"
 	 
 	canvs.append(TCanvas("c"+ptstr))
-	Mplots[ptstr+"pre"].Scale(1.0/Mplots[ptstr+"pre"].Integral())
-	Mplots[ptstr+"postM"].Scale(1.0/Mplots[ptstr+"postM"].Integral())
+	if Mplots[ptstr+"postM"].Integral()>0:
+		Mplots[ptstr+"pre"].Scale(1.0/Mplots[ptstr+"pre"].Integral())
+		Mplots[ptstr+"postM"].Scale(1.0/Mplots[ptstr+"postM"].Integral())
 
-	Mplots[ptstr+"pre"].SetLineColor(1)
-	Mplots[ptstr+"postM"].SetLineColor(2)
-	Mplots[ptstr+"pre"].SetTitle(";M_{SD} GeV;A.U.")
-	Mplots[ptstr+"pre"].SetStats(0)
-	Mplots[ptstr+"pre"].Draw("hist")
-	Mplots[ptstr+"postM"].Draw("samehist")
-	prelim.DrawLatex( 0.3, 0.75, ptstrs[0]+" GeV < p_{T} < "+ptstrs[1]+" GeV" )
-	canvs[-1].Write("masscomp"+ptstr)
+		Mplots[ptstr+"pre"].SetLineColor(1)
+		Mplots[ptstr+"postM"].SetLineColor(2)
+		Mplots[ptstr+"pre"].SetTitle(";M_{SD} GeV;A.U.")
+		Mplots[ptstr+"pre"].SetStats(0)
+		Mplots[ptstr+"pre"].Draw("hist")
+		Mplots[ptstr+"postM"].Draw("samehist")
+		prelim.DrawLatex( 0.3, 0.75, ptstrs[0]+" GeV < p_{T} < "+ptstrs[1]+" GeV" )
+		canvs[-1].Write("masscomp"+ptstr)
 
 
 
@@ -220,7 +224,7 @@ c2 = TCanvas("c2")
 ptlimstrs = [str(int(2000.0*ptlims[0])),str(int(2000.0*ptlims[1]))]
 ROCwmass.Draw()
 prelim.DrawLatex( 0.15, 0.85, ptlimstrs[0]+" GeV < p_{T} < "+ptlimstrs[1]+" GeV" )
-if cust=="w" or cust=="top":
+if (cust=="w" or cust=="top") and Drawmarker:
 	if cust=="w":
 		prelim.DrawLatex( 0.44, 0.55, "N_{2}^{DDT}+msd" )
 		TM = TMarker(0.4, 0.01, 23)
@@ -236,5 +240,7 @@ ROC.Draw()
 
 c2.Write("roccomp")
 
+dnnsig.Write()
+dnnbkg.Write()
 output.Write()
 output.Close()

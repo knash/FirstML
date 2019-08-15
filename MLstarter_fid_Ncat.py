@@ -5,6 +5,8 @@
 from __future__ import print_function
 import copy, os, sys, time, logging
 import numpy as np
+
+np.set_printoptions(threshold=sys.maxsize)
 import json
 np.random.seed(1560)
 import keras
@@ -143,6 +145,7 @@ image_array_dir_in=options.directory
 
 signalfilename= options.signal
 backgroundfilename=options.background
+testfilename=options.testname
 
 extrastringarray = signalfilename.split('__')
 extrastring = extrastringarray[-1].replace("/","-")
@@ -287,6 +290,8 @@ class DataGenerator(object):
                #if iden == 16:
                 # xy[iden]/=2000.0      
                z_val[-1].append(xy[iden])
+
+          #print(z_val[-1],"YVAL",xy[-4])
           y_val=keras.utils.to_categorical(y_val, num_classes)
           x_val=np.array(x_val)
           y_val=np.array(y_val)
@@ -447,9 +452,9 @@ print('total number of background jets:',Nbackground)
 Njets=min([Nsignal,Nbackground])
 print('Njets',Njets)
 
-train_frac_rel=0.6
-val_frac_rel=0.2
-test_frac_rel=0.2
+train_frac_rel=0.7
+val_frac_rel=0.3
+test_frac_rel=0.0
 
 train_frac=train_frac_rel
 val_frac=train_frac+val_frac_rel
@@ -465,7 +470,7 @@ print('Size of test set:',2*Ntest)
 
 trainfilename='train_sample_'+str(Ntrain)+'_'+str(Nval)+'_'+str(Ntest)+'.dat'
 valfilename='validation_sample_'+str(Ntrain)+'_'+str(Nval)+'_'+str(Ntest)+'.dat'
-testfilename='test_sample_'+str(Ntrain)+'_'+str(Nval)+'_'+str(Ntest)+'.dat'
+AUTOtestfilename='test_sample_'+str(Ntrain)+'_'+str(Nval)+'_'+str(Ntest)+'.dat'
 
 savename = 'epochs_'+str(epochs)+'_Ntrain_'+str(Ntrain)+'_'+name_sg.replace('.dat','_')+name_bg.replace('.dat','_')+post
 savename = savename.replace("/","-")
@@ -551,126 +556,126 @@ os.system('mkdir -p '+ROC_plots_dir)
 # PREDICT OUTPUT PROBABILITIES
 ##------------------------------------------------------------------------------
 if options.testname!="None":
-  print("OVERRIDE testname",options.testname)
-  testfilename=options.testname
-tempgenerator=(json.loads(s) for s in open(testfilename))
-#for sss in tempgenerator:print(sss)
+  print("OVERRIDE testname",image_array_dir_in+testfilename)
+  testfilename=image_array_dir_in+testfilename
+  Ntest=0
+  for s in open(testfilename):
+    Ntest=Ntest+1
+  tempgenerator=(json.loads(s) for s in open(testfilename))
+  #for sss in tempgenerator:print(sss)
 
 
-tempbatchsize=min([10000,Ntest])
-nbatches=int(Ntest/tempbatchsize)
-Y_Pred_prob= np.empty((0, num_classes))
-y_test=np.empty((0, num_classes))
-Ntesttry=0
-#ptlims=[0.0,999.0]
-#masslims = [0.0,999.0]
+  tempbatchsize=min([10000,Ntest])
+  nbatches=int(Ntest/tempbatchsize)
+  Y_Pred_prob= np.empty((0, num_classes))
+  y_test=np.empty((0, num_classes))
+  Ntesttry=0
+  #ptlims=[0.0,999.0]
+  #masslims = [0.0,999.0]
 
-#ptlims=[0.15,2.5]
-#masslims = [0.2,1.4]
+  #ptlims=[0.15,2.5]
+  #masslims = [0.2,1.4]
 
-ptlims = [0.1,2.5]
-masslims = [0.2,0.9]
+  #ptlims = [0.1,2.5]
+  #masslims = [0.2,0.9]
 
-arrm=[]
-fs = open("tempNcatsig"+post+".dat","w+")
-fb = open("tempNcatbkg"+post+".dat","w+")
-for ibatch in range(nbatches+1):
-  x_test_batch=[]
-  y_test_batch=[]
-  z_test_batch=[]
-  ijetmax=min([tempbatchsize,Ntest-Ntesttry])
-  if(ijetmax>0):
-    for ijet in range(ijetmax):
-      Ntesttry+=1
-      xy=next(tempgenerator)
-      #print(len(xy))
-      #if xy[-2]<0.5 or xy[-2]>0.75:
-      #  continue
-      #if xy[16]<0.5:	
-      #  continue
-      #print (xy[-2],xy[-3])
-      arrm.append([xy[-3],xy[-2]])
-      x_test_batch.append(xy[0])
-      y_test_batch.append(xy[-4])
-      z_test_batch.append([])
-
-      for iden in densearray:
-        #if iden == 16:
-         #        xy[iden]/=2000.0    
-        z_test_batch[-1].append(xy[iden])
-      #z_test_batch[-1][-2] = min(max(z_test_batch[-1][-2],masslims[0]),masslims[1])
-      #z_test_batch[-1][-1] = min(max(z_test_batch[-1][-1],ptlims[0]),ptlims[1])
-    x_test_batch,y_test_batch= prepare_keras(x_test_batch,y_test_batch)
-    testimages=expand_array(x_test_batch)
-    z_test_batch=np.array(z_test_batch)
-    Y_Pred_batch = model.predict([testimages,z_test_batch])
+  arrm=[]
+  fs = open("tempNcatsig"+post+".dat","w+")
+  fb = open("tempNcatbkg"+post+".dat","w+")
+  for ibatch in range(nbatches+1):
+    x_test_batch=[]
+    y_test_batch=[]
+    z_test_batch=[]
+    ijetmax=min([tempbatchsize,Ntest-Ntesttry])
+    if(ijetmax>0):
+      for ijet in range(ijetmax):
+        Ntesttry+=1
+        xy=next(tempgenerator)
      
-    Y_Pred_prob=np.concatenate((Y_Pred_prob,Y_Pred_batch))
-    y_test=np.concatenate((y_test,y_test_batch))
-    for yyy in range(0,len(Y_Pred_prob)):
-      #print(Y_Pred_prob[yyy],y_test[yyy],arrm[yyy])
-      QCDcont=0
-      SIGcont=0
-      for zzz in range(0,len(Y_Pred_prob[yyy])):
-        if zzz<=NQCD-1:
-          QCDcont+=Y_Pred_prob[yyy][zzz]
-        else:
-          if fidstr=="all":
-             SIGcont+=Y_Pred_prob[yyy][zzz]
-          elif zzz in fidarr:
-             SIGcont+=Y_Pred_prob[yyy][zzz]
-      strtowrite = str((SIGcont)/(SIGcont+QCDcont))+","+str(arrm[yyy][0])+","+str(arrm[yyy][1])
-      #print (y_test[yyy])
-      issig=True
-      for iq in range(0,NQCD):
-         if y_test[yyy][iq]==1.:
+        arrm.append([xy[-3],xy[-2]])
+        x_test_batch.append(xy[0])
+        y_test_batch.append(xy[-4])
+        z_test_batch.append([])
+        #print(xy[0])
+        for iden in densearray: 
+          z_test_batch[-1].append(xy[iden])
+        #print(z_test_batch[-1])
+      x_test_batch,y_test_batch= prepare_keras(x_test_batch,y_test_batch)
+      testimages=expand_array(x_test_batch)
+      #for tt in range(0,len(testimages)):
+       #print(tt,testimages[tt])
+       #print(tt,z_test_batch[tt])
+      z_test_batch=np.array(z_test_batch)
+     
+      Y_Pred_batch = model.predict([testimages,z_test_batch])
+     
+      Y_Pred_prob=np.concatenate((Y_Pred_prob,Y_Pred_batch))
+      y_test=np.concatenate((y_test,y_test_batch))
+      for yyy in range(0,len(Y_Pred_prob)):
+        #print(Y_Pred_prob[yyy],y_test[yyy],arrm[yyy])
+        QCDcont=0
+        SIGcont=0
+        for zzz in range(0,len(Y_Pred_prob[yyy])):
+          if zzz<NQCD:
+            QCDcont+=Y_Pred_prob[yyy][zzz]
+          else:
+            if fidstr=="all":
+               SIGcont+=Y_Pred_prob[yyy][zzz]
+            elif zzz in fidarr:
+               SIGcont+=Y_Pred_prob[yyy][zzz]
+        strtowrite = str((SIGcont)/(SIGcont+QCDcont))+","+str(arrm[yyy][0])+","+str(arrm[yyy][1])
+        #print (y_test[yyy])
+        issig=True
+        # print(strtowrite)
+        for iq in range(0,NQCD):
+          if y_test[yyy][iq]==1.:
             #print("bkg",strtowrite)
             fb.write(strtowrite+"\n")
             issig=False
             break
-      if issig:
-         #print("sig",strtowrite)
-         fs.write(strtowrite+"\n")
-      #print(arrm[yyy],Y_Pred_prob[yyy],y_test[yyy])
+        if issig:
+          #print("sig",strtowrite)
+          fs.write(strtowrite+"\n")
+        #print(arrm[yyy],Y_Pred_prob[yyy],y_test[yyy])
 
 
 
 
-print('begin printing CNN output')
-print('------------'*10)
-ypredfile=open('ypred.dat','w')
-print('------------'*10)
+  print('begin printing CNN output')
+  print('------------'*10)
+  ypredfile=open('ypred.dat','w')
+  print('------------'*10)
 
-difflist=[(1-int(x[0][0]/0.5))-x[1][0] for x in zip(Y_Pred_prob,y_test)]
-print('Test accuracy = ',float(np.count_nonzero(np.array(difflist)))/float(Ntesttry) )
+  difflist=[(1-int(x[0][0]/0.5))-x[1][0] for x in zip(Y_Pred_prob,y_test)]
+  print('Test accuracy = ',float(np.count_nonzero(np.array(difflist)))/float(Ntesttry) )
 
-# Predict output probability for each class (signal or background) for the image
-y_Pred = np.argmax(Y_Pred_prob, axis=1)
-y_Test = np.argmax(y_test, axis=1)
-print('Predicted output from the CNN (0 is signal and 1 is background) = \n',y_Pred[0:15])
-print('y_Test (True value) =\n ',y_Test[0:15])
-print('y_Test lenght', len(y_Test))
-print('------------'*10)
+  # Predict output probability for each class (signal or background) for the image
+  y_Pred = np.argmax(Y_Pred_prob, axis=1)
+  y_Test = np.argmax(y_test, axis=1)
+  print('Predicted output from the CNN (0 is signal and 1 is background) = \n',y_Pred[0:15])
+  print('y_Test (True value) =\n ',y_Test[0:15])
+  print('y_Test lenght', len(y_Test))
+  print('------------'*10)
 
-#Print classification report
-print(classification_report(y_Test, y_Pred))
-print('------------'*10)
+  #Print classification report
+  print(classification_report(y_Test, y_Pred))
+  print('------------'*10)
 
-# Calculate a single probability of tagging the image as signal
-out_prob=[]
-for i_prob in range(len(Y_Pred_prob)):
+  # Calculate a single probability of tagging the image as signal
+  out_prob=[]
+  for i_prob in range(len(Y_Pred_prob)):
     out_prob.append((Y_Pred_prob[i_prob][0]-Y_Pred_prob[i_prob][1]+1)/2)
 
-print('Predicted probability of each output neuron = \n',Y_Pred_prob[0:15])
-print('------------'*10)
-print('Output of tagging image as signal = \n',np.array(out_prob)[0:15])
-print('------------'*10)
+  print('Predicted probability of each output neuron = \n',Y_Pred_prob[0:15])
+  print('------------'*10)
+  print('Output of tagging image as signal = \n',np.array(out_prob)[0:15])
+  print('------------'*10)
 
-np.savetxt('outprob.csv', np.array(out_prob), delimiter=',')
-np.savetxt('inprob.csv', np.array(y_test), delimiter=',')
+  np.savetxt('outprob.csv', np.array(out_prob), delimiter=',')
+  np.savetxt('inprob.csv', np.array(y_test), delimiter=',')
 
-# Make ROC with area under the curve plot
-def generate_results(y_test, y_score):
+  # Make ROC with area under the curve plot
+  def generate_results(y_test, y_score):
     fpr, tpr, thresholds = roc_curve(y_test, y_score,pos_label=0, drop_intermediate=False)
     print('Thresholds[0:6] = \n',thresholds[:6])
     print('Thresholds lenght = \n',len(thresholds))
@@ -686,7 +691,10 @@ def generate_results(y_test, y_score):
     print('AUC =', np.float128(roc_auc))
     print('------------'*10)
 
-generate_results(y_Test, out_prob)
+  generate_results(y_Test, out_prob)
+  
+else:
+  print('Skip testing')
 print('FINISHED.')
 if len(gpuarray)>1:
 	model.save(weights_dir+'model_'+savename+'.h5')
@@ -696,3 +704,4 @@ else:
 print('-----------'*10)
 print('Code execution time = %s minutes' % ((time.time() - start_time)/60))
 print('-----------'*10)
+del tf.Session
