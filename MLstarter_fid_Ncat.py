@@ -62,7 +62,7 @@ parser.add_option('-g', '--gpus', metavar='F', type='string', action='store',
                   dest		=	'gpus',
                   help		=	'csv of gpus to run on -- 0 or 1 or 0,1')
 parser.add_option('-D', '--directory', metavar='F', type='string', action='store',
-                  default	=	'/localhome/knash/deeptop/JetImages/kevin/',
+                  default	=	'/cms/knash/EOS/JetImages/kevin/',
                   dest		=	'directory',
                   help		=	'Directory to look for signal+background dat files')
 parser.add_option('-e', '--epochs', metavar='F', type='int', action='store',
@@ -180,7 +180,7 @@ for i in range(0,len(gpuarray)):
 	gpuarray[i]=int(gpuarray[i])
 npoints = 38
 img_rows, img_cols = npoints-1, npoints-1
-N_pixels=np.power(npoints-1,2)
+
 my_batch_size = options.batchsize
 num_classes = options.nclass
 epochs =int(options.epochs)
@@ -242,22 +242,15 @@ def expand_array(images):
     npart = len(images[i])
     for j in range(npart):
        for nn in range(ncolors):
-           #try:
-            # images[i][j][0][0],images[i][j][0][1],images[i][j][1][colarray[nn]]
-           #except:
-            # continue
            expandedimages[i,images[i][j][0][0],images[i][j][0][1]][nn] = images[i][j][1][colarray[nn]]
   expandedimages=expandedimages.reshape(Nimages,img_rows,img_cols,ncolors)
   return expandedimages
 
 def prepare_keras(xlist,ylist):
   yforkeras = keras.utils.to_categorical(ylist, num_classes)
-  print('-----------'*10)
-  print('Preparing inputs for keras...')
   xarray = np.array(xlist)
   yarray = np.array(yforkeras)
-  print(xarray.shape, 'train sample shape')
-  print('-----------'*10)
+  print(xarray.shape)
   return xarray,yarray
 
 class DataGenerator(object):
@@ -342,7 +335,7 @@ if len(gpuarray)==1:
     devstr = '/gpu:0'
 nconv = options.nconv
 with tf.device(devstr):
-  conv = Conv2D(2*nconv, kernel_size=(4,4),activation='relu',padding='same',name='Conv1')
+  conv = Conv2D(2*nconv, kernel_size=(4,4),activation='relu',name='Conv1')
   layers = conv(input_shape_c)
   layers = ZeroPadding2D(padding=(1, 1))(layers)
   layers = Conv2D(nconv, (4,4), activation='relu',name='Conv2')(layers)

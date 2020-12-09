@@ -6,6 +6,7 @@ from __future__ import print_function
 import copy, os, sys, time, logging
 import numpy as np
 import json
+import random
 np.random.seed(1560)
 import keras
 print('using keras version:',keras.__version__)
@@ -60,7 +61,7 @@ parser.add_option('-g', '--gpus', metavar='F', type='string', action='store',
                   dest		=	'gpus',
                   help		=	'csv of gpus to run on -- 0 or 1 or 0,1')
 parser.add_option('-D', '--directory', metavar='F', type='string', action='store',
-                  default	=	'/localhome/knash/deeptop/JetImages/kevin/',
+                  default	=	'/cms/knash/EOS/JetImages/kevin/',
                   dest		=	'directory',
                   help		=	'Directory to look for signal+background dat files')
 parser.add_option('-e', '--epochs', metavar='F', type='int', action='store',
@@ -109,7 +110,7 @@ print('==================')
 
 
 
-os.environ['CUDA_VISIBLE_DEVICES']=options.gpus
+os.environ['CUDA_VISIBLE_DEVICES'] = options.gpus
 config.gpu_options.per_process_gpu_memory_fraction = 1.0
 
 set_session(tf.Session(config=config))
@@ -122,10 +123,10 @@ start_time = time.time()
 # Global variables
 ##------------------------------------------------------------------------------
 
-image_array_dir_in=options.directory
+image_array_dir_in = options.directory
 
-signalfilename= options.signal
-backgroundfilename=options.background
+signalfilename = options.signal
+backgroundfilename = options.background
 
 extrastringarray = signalfilename.split('__')
 extrastring = extrastringarray[-1].replace("/","-")
@@ -154,17 +155,17 @@ for i in range(0,len(gpuarray)):
 	gpuarray[i]=int(gpuarray[i])
 npoints = 38
 img_rows, img_cols = npoints-1, npoints-1
-N_pixels=np.power(npoints-1,2)
+
 my_batch_size = options.batchsize
 num_classes = 2
-epochs =int(options.epochs)
-sample_relative_size=float(options.fraction)
-mode=options.mode
+epochs = int(options.epochs)
+sample_relative_size = float(options.fraction)
+mode = options.mode
 
-ncolors=len(colarray)
-ndense=len(densearray)
+ncolors = len(colarray)
+ndense = len(densearray)
 
-learning_rate=[options.learnrate]
+learning_rate = [options.learnrate]
 
 if len(gpuarray)==0:
 	logging.error('No GPUs specified')
@@ -212,31 +213,23 @@ def expand_array(images):
     npart = len(images[i])
     for j in range(npart):
        for nn in range(ncolors):
-           #try:
-            # images[i][j][0][0],images[i][j][0][1],images[i][j][1][colarray[nn]]
-           #except:
-            # continue
            expandedimages[i,images[i][j][0][0],images[i][j][0][1]][nn] = images[i][j][1][colarray[nn]]
   expandedimages=expandedimages.reshape(Nimages,img_rows,img_cols,ncolors)
   return expandedimages
 
 def prepare_keras(xlist,ylist):
   yforkeras = keras.utils.to_categorical(ylist, num_classes)
-  print('-----------'*10)
-  print('Preparing inputs for keras...')
   xarray = np.array(xlist)
   yarray = np.array(yforkeras)
-  print(xarray.shape, 'train sample shape')
-  print('-----------'*10)
+  print(xarray.shape)
   return xarray,yarray
 
 class DataGenerator(object):
   print('Generates data for Keras')
-  def __init__(self, dim_x = img_rows, dim_y = img_cols,  batch_size = my_batch_size, shuffle = False):
+  def __init__(self, dim_x = img_rows, dim_y = img_cols,  batch_size = my_batch_size):
       self.dim_x = dim_x
       self.dim_y = dim_y
       self.batch_size = batch_size
-      self.shuffle = shuffle
 
   def generate(self, N_train):
     while True:
@@ -245,7 +238,6 @@ class DataGenerator(object):
       print('Number of minibatches =',imax)
       print('\n'+'-----------'*10)
       print('////////////'*10)
-
       traingenerator=(json.loads(s) for s in open(trainfilename))
       for i in range(imax):
           x_val=[]
@@ -257,13 +249,13 @@ class DataGenerator(object):
              y_val.append(xy[1])
              z_val.append([])
              for iden in densearray:
-               #if iden == 16:
-                # xy[iden]/=2000.0      
                z_val[-1].append(xy[iden])
+
           y_val=keras.utils.to_categorical(y_val, num_classes)
           x_val=np.array(x_val)
           y_val=np.array(y_val)
           z_val=np.array(z_val)
+
           images=expand_array(x_val)
           yield [images,z_val], y_val
 
@@ -273,7 +265,6 @@ class DataGenerator(object):
       imax=int(N_val/self.batch_size)
       print('\n'+'-----------'*10)
       print('////////////'*10)
-
       valgenerator=(json.loads(s) for s in open(valfilename))
       for i in range(imax):
           x_val=[]
@@ -285,11 +276,8 @@ class DataGenerator(object):
              y_val.append(xy[1])
              z_val.append([])
              for iden in densearray:
-               #if iden == 16:
-                # xy[iden]/=2000.0    
                z_val[-1].append(xy[iden])
 	
-
           y_val=keras.utils.to_categorical(y_val, num_classes)
           x_val=np.array(x_val)
           y_val=np.array(y_val)
@@ -308,17 +296,18 @@ input_shape_btag = Input(shape=(ndense,))
 devstr = '/cpu:0'
 if len(gpuarray)==1:
     devstr = '/gpu:0'
+
 nconv = options.nconv
 with tf.device(devstr):
-  conv = Conv2D(2*nconv, kernel_size=(4,4),activation='relu',padding='same',name='Conv1')
+  conv = Conv2D(2*nconv, kernel_size=(4,4),activation='relu',name='Conv1')
   layers = conv(input_shape_c)
   layers = ZeroPadding2D(padding=(1, 1))(layers)
-  layers = Conv2D(nconv, (4,4), activation='relu',name='Conv2')(layers)
+  layers = Conv2D(nconv, kernel_size=(4,4), activation='relu',name='Conv2')(layers)
   layers = MaxPooling2D(pool_size=(2, 2))(layers)
   layers = ZeroPadding2D(padding=(1, 1))(layers)
-  layers = Conv2D(nconv, (4,4), activation='relu',name='Conv3')(layers)
+  layers = Conv2D(nconv, kernel_size=(4,4), activation='relu',name='Conv3')(layers)
   layers = ZeroPadding2D(padding=(1, 1))(layers)
-  layers = Conv2D(nconv, (4,4), activation='relu',name='Conv4')(layers)
+  layers = Conv2D(nconv, kernel_size=(4,4), activation='relu',name='Conv4')(layers)
   layers = MaxPooling2D(pool_size=(2, 2))(layers)
 
   layers = Flatten()(layers)
@@ -348,7 +337,6 @@ else:
               metrics=['categorical_accuracy'])
 	modeltr.summary()
 
-sd=[]
 class TimingCallback(keras.callbacks.Callback):
   def __init__(self):
     self.logs=[]
@@ -389,14 +377,16 @@ def step_decay(losses):
     print('------------'*10)
 
     return lrate
-history=LossHistory(modeltr)
-lrate=keras.callbacks.LearningRateScheduler(step_decay)
-# Get new learning rate
-early_stop=keras.callbacks.EarlyStopping(monitor='val_loss', min_delta=0.0002, patience=options.patience, verbose=0, mode='auto')
-# patience -- means that if there is no improvement in the cross-validation accuracy greater that min_delta within the following 3 epochs, then it stops
-checkpoint=keras.callbacks.ModelCheckpoint('weights.{epoch:02d}-{val_loss:.2f}.hdf5', monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=True, mode='auto', period=1)
-cb = TimingCallback()
 
+history = LossHistory(modeltr)
+lrate = keras.callbacks.LearningRateScheduler(step_decay)
+
+# Get new learning rate
+early_stop = keras.callbacks.EarlyStopping(monitor='val_loss', min_delta=0.0002, patience=options.patience, verbose=0, mode='auto')
+
+# patience -- means that if there is no improvement in the cross-validation accuracy greater that min_delta within the following 3 epochs, then it stops
+checkpoint = keras.callbacks.ModelCheckpoint('weights.{epoch:02d}-{val_loss:.2f}.hdf5', monitor='val_loss', verbose=1, save_best_only=True, save_weights_only=True, mode='auto', period=1)
+cb = TimingCallback()
 
 ##------------------------------------------------------------------------------
 # TRAIN THE MODEL OR LOAD TRAINED WEIGHTS
@@ -408,12 +398,12 @@ os.system('mkdir -p '+weights_dir)
 
 
 print('Getting the length of the signal and background files')
-Nsignal=0
+Nsignal = 0
 for s in open(image_array_dir_in+signalfilename):
-  Nsignal=Nsignal+1
-Nbackground=0
+  Nsignal = Nsignal+1
+Nbackground = 0
 for s in open(image_array_dir_in+backgroundfilename):
-  Nbackground=Nbackground+1
+  Nbackground = Nbackground+1
 
 print('total number of signal jets:',Nsignal)
 print('total number of background jets:',Nbackground)
@@ -423,10 +413,6 @@ print('Njets',Njets)
 train_frac_rel=0.6
 val_frac_rel=0.2
 test_frac_rel=0.2
-
-train_frac=train_frac_rel
-val_frac=train_frac+val_frac_rel
-test_frac =val_frac+test_frac_rel
 
 Ntrain=int(train_frac_rel*Njets*sample_relative_size)
 Nval=int(val_frac_rel*Njets*sample_relative_size)
@@ -474,23 +460,21 @@ if options.load!='None':
 saveweightname=weights_dir+'cnn_weights_'+savename+'.hdf'
 if mode=='train':
 
-  #saveweightname=weights_dir+'cnn_weights_'+savename+'.hdf'
-
   train_x_train_y = DataGenerator().generate(Ntrain)
   val_x_val_y = DataGenerator().valgenerate(Nval)
 
-  my_steps_per_epoch= int(Ntrain/my_batch_size)
+  my_steps_per_epoch = int(Ntrain/my_batch_size)
   print('my_steps_per_epoch =',my_steps_per_epoch)
-  valsteps=int(Nval/my_batch_size)
+  valsteps = int(Nval/my_batch_size)
   print(valsteps)
 
   modeltr.fit_generator(generator = train_x_train_y,
-                    steps_per_epoch = my_steps_per_epoch, #This is the number of files that we use to train in each epoch
-                    epochs=epochs,
-                    verbose=1,
-                    validation_data =val_x_val_y,
+                    steps_per_epoch = my_steps_per_epoch, 
+                    epochs = epochs,
+                    verbose = 1,
+                    validation_data = val_x_val_y,
                     validation_steps = valsteps,
-                    callbacks=[history,lrate,early_stop,checkpoint,cb])#,
+                    callbacks = [history,lrate,early_stop,checkpoint,cb])
   print(cb.logs)
   print('------------'*10)
   print('Weights filename =',saveweightname)
@@ -524,7 +508,6 @@ os.system('mkdir -p '+ROC_plots_dir)
 ##------------------------------------------------------------------------------
 # PREDICT OUTPUT PROBABILITIES
 ##------------------------------------------------------------------------------
-
 tempgenerator=(json.loads(s) for s in open(testfilename))
 tempbatchsize=min([10000,Ntest])
 nbatches=int(Ntest/tempbatchsize)
@@ -544,13 +527,11 @@ for ibatch in range(nbatches+1):
       y_test_batch.append(xy[1])
       z_test_batch.append([])
       for iden in densearray:
-        #if iden == 16:
-         #        xy[iden]/=2000.0    
         z_test_batch[-1].append(xy[iden])
-    x_test_batch,y_test_batch= prepare_keras(x_test_batch,y_test_batch)
+    x_test_batch,y_test_batch=prepare_keras(x_test_batch,y_test_batch)
     testimages=expand_array(x_test_batch)
     z_test_batch=np.array(z_test_batch)
-    Y_Pred_batch = model.predict([testimages,z_test_batch])
+    Y_Pred_batch=model.predict([testimages,z_test_batch])
     Y_Pred_prob=np.concatenate((Y_Pred_prob,Y_Pred_batch))
     y_test=np.concatenate((y_test,y_test_batch))
 
@@ -615,3 +596,4 @@ else:
 print('-----------'*10)
 print('Code execution time = %s minutes' % ((time.time() - start_time)/60))
 print('-----------'*10)
+del tf.Session

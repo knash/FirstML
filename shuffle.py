@@ -14,21 +14,25 @@ class pyshuffle():
     nline = 0
     with open(self.sigfile) as infile:
       for line in infile:
+        if nline>int(self.Nval)+int(self.Ntest)+int(self.Ntrain):
+          break
         if(0<=nline<int(self.Nval)):
           valf.write(line)
-        if(int(self.Nval)<=nline<int(self.Nval)+int(self.Ntest)):
+        elif(int(self.Nval)<=nline<int(self.Nval)+int(self.Ntest)):
           tesf.write(line)
-        if(int(self.Nval)+int(self.Ntest)<=nline<int(self.Nval)+int(self.Ntest)+int(self.Ntrain)):
+        elif(int(self.Nval)+int(self.Ntest)<=nline<int(self.Nval)+int(self.Ntest)+int(self.Ntrain)):
           traf.write(line)
         nline+=1
     nline = 0
     with open(self.bgfile) as infile:
       for line in infile:
+        if nline>int(self.Nval)+int(self.Ntest)+int(self.Ntrain):
+          break
         if(0<=nline<int(self.Nval)):
           valf.write(line)
-        if(int(self.Nval)<=nline<int(self.Nval)+int(self.Ntest)):
+        elif(int(self.Nval)<=nline<int(self.Nval)+int(self.Ntest)):
           tesf.write(line)
-        if(int(self.Nval)+int(self.Ntest)<=nline<int(self.Nval)+int(self.Ntest)+int(self.Ntrain)):
+        elif(int(self.Nval)+int(self.Ntest)<=nline<int(self.Nval)+int(self.Ntest)+int(self.Ntrain)):
           traf.write(line)
         nline+=1
 
